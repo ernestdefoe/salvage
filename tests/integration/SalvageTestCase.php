@@ -28,7 +28,7 @@ abstract class SalvageTestCase extends TestCase
         parent::setUp();
 
         // The test forum's public folder outlives each test.
-        $mirrors = dirname(__DIR__, 2).'/vendor/flarum/testing/src/integration/tmp/public/assets/salvage';
+        $mirrors = (getenv('FLARUM_TEST_TMP_DIR_LOCAL') ?: getenv('FLARUM_TEST_TMP_DIR') ?: dirname(__DIR__, 2).'/vendor/flarum/testing/src/integration/tmp').'/public/assets/salvage';
         if (is_dir($mirrors)) {
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($mirrors, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $file) {
                 $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());

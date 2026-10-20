@@ -103,6 +103,8 @@ class WorkTest extends SalvageTestCase
         $this->http->respond('https://img.example/huge.png', 200, ['content-type' => 'image/png'], str_repeat('x', 60 * 1024));
         $this->http->respond('https://img.example/bomb.png', 200, ['content-type' => 'image/png'], $bomb);
 
+        // The test forum's public folder outlives each test (and its place differs on CI).
+        $before = $this->disk()->allFiles();
         $this->post('![](https://img.example/vector.svg) ![](https://img.example/fake.png) ![](https://img.example/huge.png) ![](https://img.example/bomb.png)');
         // Four images on one host: three this round, the last one next round.
         $this->run_();
@@ -117,7 +119,7 @@ class WorkTest extends SalvageTestCase
             $this->assertNotNull($link->next_check_at, "$file: still checked as a link");
         }
 
-        $this->assertSame([], $this->disk()->allFiles());
+        $this->assertSame($before, $this->disk()->allFiles(), 'Nothing was stored.');
     }
 
     #[Test]
