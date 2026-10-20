@@ -29,6 +29,8 @@ class Runner
     public const PER_HOST = 3;
     public const SCAN_CHUNK = 500;
     public const FLAGS_PER_RUN = 100;
+    public const CLEANUP_WINDOW = 2000;
+    public const CLEANUP_CURSOR = 'ernestdefoe-salvage.cleanup_cursor';
     private const HOST_DOWN = ['dns', 'timeout', 'connect', 'tls'];
 
     public function __construct(
@@ -233,10 +235,17 @@ class Runner
      */
     private function cleanup(): int
     {
+        // A window of ids per round, so the sweep costs the same on a forum
+        // with a million links as on one with a hundred.
+        $from = (int) $this->cache->get(self::CLEANUP_CURSOR, 0);
+        $to = $from + self::CLEANUP_WINDOW;
+        $this->cache->forever(self::CLEANUP_CURSOR, $to > (int) Link::query()->max('id') ? 0 : $to);
+
         $orphans = Link::query()
+            ->where('id', '>', $from)
+            ->where('id', '<=', $to)
             ->whereDoesntHave('posts')
             ->where('created_at', '<', Carbon::now()->subDay())
-            ->limit(200)
             ->get(['id', 'mirror_path']);
 
         if ($orphans->isEmpty()) {

@@ -11,7 +11,7 @@ namespace Ernestdefoe\Salvage\Net;
 final class CurlTransport implements Transport
 {
     public const CONNECT_TIMEOUT = 5;
-    public const TIMEOUT = 15;
+    public const TIMEOUT = 10;
 
     private const TLS_ERRORS = [35, 51, 53, 54, 58, 59, 60, 64, 66, 77, 80, 82, 83, 90, 91];
 

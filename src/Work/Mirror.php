@@ -84,6 +84,11 @@ class Mirror
             return 1;
         }
 
+        // Counted before decoding: if the decoder takes the process down, the
+        // image is not tried again forever.
+        $link->mirror_tries++;
+        $link->save();
+
         $encoded = $this->reencode($response->body);
 
         if (is_string($encoded['error'] ?? null)) {
@@ -96,7 +101,6 @@ class Mirror
             [$url, $path] = $this->store($link, $encoded['bytes'], $encoded['ext']);
         } catch (Throwable $e) {
             $this->log->warning('[salvage] storing a mirrored image failed: '.$e->getMessage());
-            $link->mirror_tries++;
             $link->error = 'storage';
             $link->next_check_at = Carbon::now()->addHours(6);
             $link->save();
@@ -133,7 +137,9 @@ class Mirror
         $ext = self::TYPES[$info[2]];
         $frames = $ext === 'gif' ? max(1, substr_count($bytes, "\x21\xF9\x04")) : 1;
 
-        if ($info[0] < 1 || $info[1] < 1 || $info[0] * $info[1] * $frames > self::MAX_PIXELS) {
+        $pixels = $info[0] * $info[1] * $frames;
+
+        if ($info[0] < 1 || $info[1] < 1 || $pixels > self::MAX_PIXELS || ! self::fitsInMemory($pixels)) {
             return ['error' => 'too_large'];
         }
 
@@ -223,6 +229,27 @@ class Mirror
         } finally {
             @unlink($temp);
         }
+    }
+
+    /**
+     * Decoding takes about five bytes a pixel, plus room to encode again.
+     */
+    private static function fitsInMemory(int $pixels): bool
+    {
+        $limit = (string) ini_get('memory_limit');
+
+        if ($limit === '' || $limit === '-1') {
+            return true;
+        }
+
+        $bytes = (int) $limit * match (strtolower(substr($limit, -1))) {
+            'g' => 1024 ** 3,
+            'm' => 1024 ** 2,
+            'k' => 1024,
+            default => 1,
+        };
+
+        return $pixels * 5 * 2 < $bytes - memory_get_usage();
     }
 
     private function giveUp(Link $link, string $error): void

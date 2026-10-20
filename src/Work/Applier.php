@@ -52,8 +52,10 @@ class Applier
                 $xml = (string) $post->content;
                 $new = $this->rewrite($link, $xml);
 
+                // Only if nobody edited the post since it was read: an edit
+                // goes through the save listener, which applies this decision itself.
                 if ($new !== $xml) {
-                    $this->db->table('posts')->where('id', $post->id)->update(['content' => $new]);
+                    $this->db->table('posts')->where('id', $post->id)->where('content', $post->content)->update(['content' => $new]);
                 }
             }
         } while ($posts->count() === self::CHUNK);

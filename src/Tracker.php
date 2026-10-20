@@ -163,6 +163,7 @@ class Tracker
         $hashes = array_map(fn ($url) => Link::hash((string) $url), array_keys($kinds));
         $existing = $this->find($hashes);
         $known = [];
+        $nowImages = [];
 
         foreach ($existing as $link) {
             $known[$link->url] = true;
@@ -172,9 +173,13 @@ class Tracker
             }
 
             if ($link->kind === 'link' && ($kinds[$link->url] ?? null) === 'image' && $link->action === null) {
-                Link::query()->whereKey($link->id)->update(['kind' => 'image']);
+                $nowImages[] = $link->id;
                 $link->kind = 'image';
             }
+        }
+
+        if ($nowImages !== []) {
+            Link::query()->whereIn('id', $nowImages)->update(['kind' => 'image']);
         }
 
         $new = array_diff_key($kinds, $known);
