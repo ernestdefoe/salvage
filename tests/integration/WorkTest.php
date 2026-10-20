@@ -65,6 +65,29 @@ class WorkTest extends SalvageTestCase
     }
 
     #[Test]
+    public function stops_mirroring_for_the_day_at_the_daily_cap(): void
+    {
+        $this->setting(Settings::USE_FOF_UPLOAD, false);
+        $this->setting(Settings::DAILY_MB, 1);
+        $this->boot();
+        $this->app()->getContainer()->make('cache.store')->put('ernestdefoe-salvage.mirrored.'.gmdate('Ymd'), 1024 * 1024, 60);
+        $this->http->respond('https://img.example/late.png', 200, [], self::png());
+
+        $this->post('![](https://img.example/late.png)');
+        $this->run_();
+
+        $this->assertSame([], $this->http->sent, 'Not fetched, not checked either.');
+        $link = $this->link('https://img.example/late.png');
+        $this->assertNull($link->action);
+        $this->assertTrue($link->next_check_at->lessThanOrEqualTo(Carbon::now()), 'Still due, for tomorrow.');
+
+        $this->app()->getContainer()->make('cache.store')->forget('ernestdefoe-salvage.mirrored.'.gmdate('Ymd'));
+        $this->run_();
+        $this->assertSame('mirror', $this->link('https://img.example/late.png')->action);
+        $this->assertGreaterThan(0, $this->app()->getContainer()->make('cache.store')->get('ernestdefoe-salvage.mirrored.'.gmdate('Ymd')));
+    }
+
+    #[Test]
     public function refuses_to_mirror_what_is_not_a_safe_image(): void
     {
         $this->setting(Settings::USE_FOF_UPLOAD, false);

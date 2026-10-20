@@ -127,7 +127,8 @@ class Runner
     private function network(float $deadline): array
     {
         $checking = $this->settings->on(Settings::CHECK_LINKS);
-        $mirroring = $this->settings->on(Settings::MIRROR_IMAGES);
+        $mirroringOn = $this->settings->on(Settings::MIRROR_IMAGES);
+        $mirroring = $mirroringOn && ! $this->mirror->overDailyCap();
         $budget = $this->settings->int(Settings::PER_RUN, 5, 200);
         $spent = 0;
         $newlyBroken = [];
@@ -140,6 +141,9 @@ class Runner
 
         if (! $checking) {
             $due->where('kind', 'image')->whereNull('action')->where('mirror_tries', '<', Mirror::MAX_TRIES);
+        } elseif ($mirroringOn && ! $mirroring) {
+            // Images waiting for tomorrow's allowance must not crowd out the links.
+            $due->where(fn ($q) => $q->where('kind', 'link')->orWhereNotNull('action')->orWhere('mirror_tries', '>=', Mirror::MAX_TRIES));
         }
 
         $perHost = [];
@@ -164,11 +168,20 @@ class Runner
                 continue;
             }
 
+            $mirrorable = $mirroringOn && $link->kind === 'image' && $link->action === null && $link->mirror_tries < Mirror::MAX_TRIES;
+
+            // Past today's mirroring allowance an image waits for tomorrow's,
+            // rather than being checked and put off for a month.
+            if ($mirrorable && ! $mirroring) {
+                continue;
+            }
+
             $perHost[$link->host] = ($perHost[$link->host] ?? 0) + 1;
             $wasBroken = $link->status === 'broken';
 
-            if ($mirroring && $link->kind === 'image' && $link->action === null && $link->mirror_tries < Mirror::MAX_TRIES) {
+            if ($mirrorable) {
                 $spent += $this->mirror->mirror($link);
+                $mirroring = ! $this->mirror->overDailyCap();
             } elseif ($checking) {
                 $spent += $this->checker->check($link);
             } else {

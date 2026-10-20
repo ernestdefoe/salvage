@@ -59,6 +59,7 @@ export const extend = [
     .setting(number('per_run', 5, 200))
     .setting(number('recheck_days', 1, 365, false))
     .setting(number('max_image_kb', 50, 51200, false))
+    .setting(number('daily_mb', 1, 1048576))
     .setting(() => ({
       setting: key('skip_domains'),
       type: 'textarea',

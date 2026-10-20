@@ -114,6 +114,8 @@ ernestdefoe-salvage:
       per_run_help: A round runs every five minutes. Never more than 3 requests to one site per round.
       recheck_days_label: Recheck working links every (days)
       max_image_kb_label: Largest image to mirror (KB)
+      daily_mb_label: Mirror at most this much a day (MB)
+      daily_mb_help: Anyone who can post can make the forum copy pictures, so a day's copies are capped. Images past the cap wait for the next day.
       skip_domains_label: Never check or mirror
       skip_domains_help: One site per line, e.g. example.com (includes its subdomains). Use it for sites that block checkers or that you trust to stay up.
 

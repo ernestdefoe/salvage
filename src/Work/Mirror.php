@@ -12,6 +12,7 @@ use Flarum\Post\Post;
 use Flarum\User\User;
 use FoF\Upload\Commands\Upload;
 use FoF\Upload\Commands\UploadHandler;
+use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Filesystem\Factory;
 use Intervention\Image\Decoders\BinaryImageDecoder;
@@ -54,7 +55,22 @@ class Mirror
         private readonly ExtensionManager $extensions,
         private readonly Container $container,
         private readonly LoggerInterface $log,
+        private readonly Cache $cache,
     ) {
+    }
+
+    /**
+     * Anyone who may post can make the forum download pictures, so what is
+     * stored in a day is capped: posting a flood of images cannot fill the disk.
+     */
+    public function overDailyCap(): bool
+    {
+        return (int) $this->cache->get(self::dayKey(), 0) >= $this->settings->int(Settings::DAILY_MB, 1, 1024 * 1024) * 1024 * 1024;
+    }
+
+    private static function dayKey(): string
+    {
+        return 'ernestdefoe-salvage.mirrored.'.gmdate('Ymd');
     }
 
     /**
@@ -107,6 +123,8 @@ class Mirror
 
             return 1;
         }
+
+        $this->cache->put(self::dayKey(), (int) $this->cache->get(self::dayKey(), 0) + strlen($encoded['bytes']), 2 * 86400);
 
         $link->status = 'ok';
         $link->http_status = 200;

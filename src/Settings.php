@@ -12,6 +12,7 @@ final class Settings
     public const PER_RUN = 'ernestdefoe-salvage.per_run';
     public const RECHECK_DAYS = 'ernestdefoe-salvage.recheck_days';
     public const MAX_IMAGE_KB = 'ernestdefoe-salvage.max_image_kb';
+    public const DAILY_MB = 'ernestdefoe-salvage.daily_mb';
     public const SKIP_DOMAINS = 'ernestdefoe-salvage.skip_domains';
     public const ARCHIVE = 'ernestdefoe-salvage.archive';
     public const AUTO_ARCHIVE = 'ernestdefoe-salvage.auto_archive';
@@ -26,6 +27,7 @@ final class Settings
         self::PER_RUN => 40,
         self::RECHECK_DAYS => 30,
         self::MAX_IMAGE_KB => 5120,
+        self::DAILY_MB => 500,
         self::SKIP_DOMAINS => '',
         self::ARCHIVE => true,
         self::AUTO_ARCHIVE => false,
