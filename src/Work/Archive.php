@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Ernestdefoe\Salvage\Link;
 use Ernestdefoe\Salvage\Net\Fetcher;
 use Ernestdefoe\Salvage\Net\Refused;
+use Illuminate\Contracts\Cache\Repository as Cache;
 
 /**
  * Asks the Wayback Machine for its closest copy of a broken link.
@@ -14,9 +15,16 @@ class Archive
 {
     public const HOST = 'archive.org';
     public const API = 'https://archive.org/wayback/available?url=';
+    public const PAUSE = 'ernestdefoe-salvage.archive_pause';
 
-    public function __construct(private readonly Fetcher $fetcher)
+    public function __construct(private readonly Fetcher $fetcher, private readonly Cache $cache)
     {
+    }
+
+    /** True while archive.org has asked us (or seemed to need us) to slow down. */
+    public function paused(): bool
+    {
+        return $this->cache->has(self::PAUSE);
     }
 
     /**
@@ -27,7 +35,16 @@ class Archive
         try {
             $response = $this->fetcher->fetch('GET', self::API.rawurlencode($link->url), 64 * 1024);
         } catch (Refused) {
-            // Asked again on a later run; archive.org has bad days too.
+            // Unreachable: leave archive.org alone for an hour; the link is asked about again then.
+            $this->cache->put(self::PAUSE, 1, 3600);
+
+            return 1;
+        }
+
+        if ($response->status === 429 || $response->status >= 500) {
+            $retry = (int) $response->header('retry-after');
+            $this->cache->put(self::PAUSE, 1, $retry >= 60 && $retry <= 86400 ? $retry : 3600);
+
             return 1;
         }
 

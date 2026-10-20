@@ -269,6 +269,26 @@ class WorkTest extends SalvageTestCase
     }
 
     #[Test]
+    public function archive_org_saying_slow_down_pauses_the_lookups(): void
+    {
+        $this->boot();
+        foreach (['a', 'b', 'c'] as $path) {
+            $this->http->respond("https://dead.example/$path", 404);
+            $this->http->respond(Archive::API.rawurlencode("https://dead.example/$path"), 429, ['retry-after' => '120']);
+        }
+        $this->post('[a](https://dead.example/a) [b](https://dead.example/b) [c](https://dead.example/c)');
+
+        $this->run_();
+        $this->makeDue();
+        $this->run_();
+
+        $asked = array_filter($this->http->sent, fn ($r) => $r[2] === 'archive.org');
+        $this->assertCount(1, $asked, 'One 429 and archive.org is left alone.');
+        $this->assertTrue($this->app()->getContainer()->make('cache.store')->has(Archive::PAUSE));
+        $this->assertNull($this->link('https://dead.example/a')->archive_checked_at, 'Asked again after the pause.');
+    }
+
+    #[Test]
     public function archive_answers_are_validated(): void
     {
         $this->assertNull(Archive::snapshotUrl('javascript:alert(1)//web.archive.org/web/1/https://x.example/'));

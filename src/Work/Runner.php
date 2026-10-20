@@ -209,7 +209,7 @@ class Runner
             ->get();
 
         foreach ($links as $link) {
-            if (microtime(true) > $deadline) {
+            if (microtime(true) > $deadline || $this->archive->paused()) {
                 break;
             }
 
