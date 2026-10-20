@@ -139,7 +139,7 @@ class Mirror
 
         $pixels = $info[0] * $info[1] * $frames;
 
-        if ($info[0] < 1 || $info[1] < 1 || $pixels > self::MAX_PIXELS || ! self::fitsInMemory($pixels)) {
+        if ($info[0] < 1 || $info[1] < 1 || $pixels > self::MAX_PIXELS || ! self::fitsInMemory($pixels, strlen($bytes))) {
             return ['error' => 'too_large'];
         }
 
@@ -232,9 +232,10 @@ class Mirror
     }
 
     /**
-     * Decoding takes about five bytes a pixel, plus room to encode again.
+     * GD holds about five bytes a pixel and encodes from that same bitmap;
+     * the output and the source bytes, plus a margin, come on top.
      */
-    private static function fitsInMemory(int $pixels): bool
+    private static function fitsInMemory(int $pixels, int $size): bool
     {
         $limit = (string) ini_get('memory_limit');
 
@@ -249,7 +250,7 @@ class Mirror
             default => 1,
         };
 
-        return $pixels * 5 * 2 < $bytes - memory_get_usage();
+        return $pixels * 5 + $size * 2 + 8 * 1024 * 1024 < $bytes - memory_get_usage();
     }
 
     private function giveUp(Link $link, string $error): void
