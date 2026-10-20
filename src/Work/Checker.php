@@ -16,7 +16,8 @@ use Ernestdefoe\Salvage\Settings;
  * with no DNS records twice, at least a day apart; anything that might be
  * the network's fault (timeouts, refused connections, TLS, 5xx) four times
  * over about four days. Bot walls (401/403/429, LinkedIn's 999) count as
- * alive, because a person clicking the link gets through.
+ * alive for links, because a person clicking the link gets through; not for
+ * images, which readers' browsers are refused just the same.
  */
 class Checker
 {
@@ -63,7 +64,9 @@ class Checker
 
         if ($status < 400) {
             $this->recordAlive($link, 'ok');
-        } elseif ($status === 404 || $status === 410) {
+        } elseif ($status === 404 || $status === 410 || ($link->kind === 'image' && $status !== 429 && $status < 500)) {
+            // An image the source refuses to serve (hotlink protection, 403,
+            // 400) is just as missing for readers, whose browsers are refused too.
             $this->recordDead($link, "http_$status", false);
         } elseif ($status >= 500 && $status <= 599) {
             $this->recordDead($link, "http_$status", true);

@@ -33,7 +33,8 @@ const ERRORS = [
 /** Only web addresses become links in the admin page; anything else stays text. */
 const safeHref = (url) => (typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null);
 
-const ExternalLink = ({ url, children }) => {
+/** A link that opens outside the admin, or plain text when it is not a web address. */
+const externalLink = (url, children) => {
   const href = safeHref(url);
   return href ? (
     <a href={href} target="_blank" rel="noopener noreferrer nofollow">
@@ -193,12 +194,12 @@ export default class LinkHealth extends Component {
               </Button>
             </p>
           ) : (
-            <p>
-              <span className="helpText">{t('status.scan_help')}</span>{' '}
+            <>
+              <p className="helpText">{t('status.scan_help')}</p>
               <Button className="Button" icon="fas fa-magnifying-glass" onclick={() => this.scan(true)}>
                 {t('status.scan_start')}
               </Button>
-            </p>
+            </>
           )}
           {o.counts.pending ? <p className="helpText">{t('status.pending', { count: o.counts.pending.toLocaleString() })}</p> : null}
         </div>
@@ -290,7 +291,7 @@ export default class LinkHealth extends Component {
         <div className="SalvageLink-main">
           <div className="SalvageLink-url">
             {link.kind === 'image' ? <Icon name="far fa-image" className="SalvageLink-kind" title={t('links.image')} /> : null}
-            <ExternalLink url={link.url} />
+            {externalLink(link.url)}
           </div>
           <div className="SalvageLink-meta">
             <span className={`SalvageLink-status SalvageLink-status--${link.status}`}>{t(`status_labels.${link.status}`)}</span>
@@ -347,10 +348,10 @@ export default class LinkHealth extends Component {
     if (link.applying) return <div className="SalvageLink-decision">{t('links.applying')}</div>;
 
     const note = {
-      replace: () => t('links.replaced_with', { url: <ExternalLink url={link.replacement} /> }),
+      replace: () => t('links.replaced_with', { url: externalLink(link.replacement) }),
       restore: () => t('links.applying'),
       unlink: () => t('links.unlinked'),
-      mirror: () => t('links.mirrored', { url: <ExternalLink url={link.replacement} /> }),
+      mirror: () => t('links.mirrored', { url: externalLink(link.replacement) }),
       ignore: () => t('links.ignored_note'),
     }[link.action];
 
@@ -358,9 +359,7 @@ export default class LinkHealth extends Component {
 
     if (link.status === 'broken' && link.archiveChecked) {
       return (
-        <div className="SalvageLink-decision">
-          {link.archiveUrl ? <ExternalLink url={link.archiveUrl}>{t('links.archive_copy')}</ExternalLink> : t('links.no_archive')}
-        </div>
+        <div className="SalvageLink-decision">{link.archiveUrl ? externalLink(link.archiveUrl, t('links.archive_copy')) : t('links.no_archive')}</div>
       );
     }
 

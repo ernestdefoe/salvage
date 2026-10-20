@@ -163,6 +163,25 @@ class WorkTest extends SalvageTestCase
     }
 
     #[Test]
+    public function an_image_the_source_refuses_to_serve_is_missing_for_readers_too(): void
+    {
+        $this->setting(Settings::MIRROR_IMAGES, false);
+        $this->boot();
+        $this->http->respond('https://img.example/hotlink.png', 403);
+        $this->post('![](https://img.example/hotlink.png) [walled page](https://alive.example/walled)');
+        $this->http->respond('https://alive.example/walled', 403);
+
+        $this->run_();
+        $this->assertSame('http_403', $this->link('https://img.example/hotlink.png')->error);
+        $this->assertSame(1, $this->link('https://img.example/hotlink.png')->fail_count);
+        $this->assertSame('blocked', $this->link('https://alive.example/walled')->status, 'A link behind a wall is still fine.');
+
+        $this->makeDue();
+        $this->run_();
+        $this->assertSame('broken', $this->link('https://img.example/hotlink.png')->status);
+    }
+
+    #[Test]
     public function refuses_private_targets_and_marks_them_skipped(): void
     {
         $this->boot();

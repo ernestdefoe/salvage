@@ -1,6 +1,10 @@
 .SalvageHealth {
   margin-bottom: 40px;
 
+  &-status .Alert {
+    margin-bottom: 20px;
+  }
+
   &-status h3 {
     font-size: 15px;
     margin: 0 0 6px;
@@ -25,9 +29,14 @@
     gap: 6px;
   }
 
+  &-filters .Select,
   &-filters .FormControl {
-    width: auto;
-    min-width: 200px;
+    flex: 1 1 240px;
+  }
+
+  &-filters {
+    flex: 1 1 520px;
+    max-width: 640px;
   }
 
   &-count {
@@ -97,11 +106,7 @@
     font-weight: bold;
 
     &--broken {
-      color: var(--alert-error-color, #d83e3e);
-    }
-
-    &--ok {
-      color: var(--alert-success-color, #2a7d38);
+      color: var(--validation-error-color);
     }
   }
 
