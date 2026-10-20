@@ -18,12 +18,18 @@ use WeakMap;
  */
 class TrackPostLinks
 {
-    /** @var WeakMap<CommentPost, list<int>> */
-    private WeakMap $pending;
+    /**
+     * What saving() found, for saved(). Static: the event dispatcher builds
+     * a fresh listener for each event. Weak: a post that is never saved
+     * after all leaves nothing behind.
+     *
+     * @var WeakMap<CommentPost, list<int>>|null
+     */
+    private static ?WeakMap $pending = null;
 
     public function __construct(private readonly Tracker $tracker, private readonly LoggerInterface $log)
     {
-        $this->pending = new WeakMap();
+        self::$pending ??= new WeakMap();
     }
 
     public function saving(CommentPost $post): void
@@ -37,7 +43,7 @@ class TrackPostLinks
 
             if (! is_string($xml) || ! str_starts_with($xml, '<r')) {
                 // Plain text holds no links; an edit may have removed them all.
-                $this->pending[$post] = [];
+                self::$pending[$post] = [];
 
                 return;
             }
@@ -48,7 +54,7 @@ class TrackPostLinks
                 $post->setParsedContentAttribute($result['xml']);
             }
 
-            $this->pending[$post] = $result['ids'];
+            self::$pending[$post] = $result['ids'];
         } catch (Throwable $e) {
             $this->log->error('[salvage] '.$e->getMessage());
         }
@@ -56,12 +62,12 @@ class TrackPostLinks
 
     public function saved(CommentPost $post): void
     {
-        if (! isset($this->pending[$post])) {
+        if (! isset(self::$pending[$post])) {
             return;
         }
 
-        $ids = $this->pending[$post];
-        unset($this->pending[$post]);
+        $ids = self::$pending[$post];
+        unset(self::$pending[$post]);
 
         if ($ids === [] && $post->wasRecentlyCreated) {
             return;

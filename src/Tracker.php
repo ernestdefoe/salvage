@@ -235,12 +235,6 @@ class Tracker
      */
     public function skipReason(string $url, string $host): ?string
     {
-        try {
-            UrlGuard::check($url);
-        } catch (Refused $e) {
-            return $e->reason;
-        }
-
         $host = rtrim($host, '.');
         $this->ownHost ??= strtolower((string) parse_url((string) $this->config->url(), PHP_URL_HOST));
 
@@ -252,6 +246,12 @@ class Tracker
             if ($host === $domain || str_ends_with($host, '.'.$domain)) {
                 return 'skip_list';
             }
+        }
+
+        try {
+            UrlGuard::check($url);
+        } catch (Refused $e) {
+            return $e->reason;
         }
 
         return null;

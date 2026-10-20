@@ -35,6 +35,8 @@ class Flagger
             ->join('posts', 'posts.id', '=', 'salvage_link_post.post_id')
             ->join('salvage_links', 'salvage_links.id', '=', 'salvage_link_post.link_id')
             ->whereIn('salvage_link_post.link_id', $linkIds)
+            // Already dealt with (an automatic archive.org copy) in this round.
+            ->whereNull('salvage_links.action')
             ->where('posts.type', 'comment')
             ->whereNull('posts.hidden_at')
             ->whereNotExists(fn ($q) => $q->from('flags')->whereColumn('flags.post_id', 'posts.id')->where('flags.type', self::TYPE))

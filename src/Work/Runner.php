@@ -63,10 +63,15 @@ class Runner
         try {
             $deadline = microtime(true) + self::SECONDS;
 
+            $scanned = $this->scan(microtime(true) + 10);
+            $applied = $this->applyPending($deadline);
+            $network = $this->network($deadline);
+
             return [
-                'scanned' => $this->scan(microtime(true) + 10),
-                'applied' => $this->applyPending($deadline),
-                ...$this->network($deadline),
+                'scanned' => $scanned,
+                // Again: what this round mirrored or archived reaches the posts now, not in five minutes.
+                'applied' => $applied + $this->applyPending($deadline + 10),
+                ...$network,
                 'removed' => $this->cleanup(),
             ];
         } finally {

@@ -2,12 +2,14 @@
 
 use Ernestdefoe\Salvage\Api;
 use Ernestdefoe\Salvage\Console\WorkCommand;
+use Ernestdefoe\Salvage\Listener\TrackPostLinks;
 use Ernestdefoe\Salvage\Provider;
 use Ernestdefoe\Salvage\Settings;
 use Ernestdefoe\Salvage\Work\Mirror;
 use Flarum\Extend;
 use Flarum\Foundation\Paths;
 use Flarum\Http\UrlGenerator;
+use Flarum\Post\CommentPost;
 use Illuminate\Console\Scheduling\Event;
 
 $settings = new Extend\Settings();
@@ -17,9 +19,13 @@ foreach (Settings::DEFAULTS as $key => $value) {
 }
 
 return [
-    // Only for flarum/flags: how a "broken link" flag reads in the flag list.
-    (new Extend\Frontend('forum'))
-        ->js(__DIR__.'/js/dist/forum.js'),
+    // Only for flarum/flags: how a "broken link" flag reads. Without Flags,
+    // the forum loads nothing of Salvage's.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-flags', fn () => [
+            (new Extend\Frontend('forum'))
+                ->js(__DIR__.'/js/dist/forum.js'),
+        ]),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
@@ -30,6 +36,12 @@ return [
     $settings,
 
     new Extend\ServiceProvider(Provider::class),
+
+    // Eloquent's own events, so posts saved by any code path are covered,
+    // not only those saved through the API. Resolved only when a post saves.
+    (new Extend\Event())
+        ->listen('eloquent.saving: '.CommentPost::class, [TrackPostLinks::class, 'saving'])
+        ->listen('eloquent.saved: '.CommentPost::class, [TrackPostLinks::class, 'saved']),
 
     // Mirrored images when FoF Upload is not used. A Flarum disk, so a forum
     // can point it at S3 or anywhere else like its other disks.

@@ -65,7 +65,7 @@ class Checker
             $this->recordAlive($link, 'ok');
         } elseif ($status === 404 || $status === 410) {
             $this->recordDead($link, "http_$status", false);
-        } elseif ($status >= 500) {
+        } elseif ($status >= 500 && $status <= 599) {
             $this->recordDead($link, "http_$status", true);
         } else {
             $this->recordAlive($link, 'blocked');

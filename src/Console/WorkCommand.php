@@ -13,16 +13,13 @@ use Symfony\Component\Console\Input\InputOption;
  * Scheduled every five minutes. Hands a round of work to the queue (a worker
  * runs it, or with the default sync queue this CLI process does), unless one
  * is already waiting there: a stalled worker must not come back to a pile.
+ *
+ * No constructor dependencies: Flarum's scheduler builds every scheduled
+ * command when the app boots, so anything injected here would be built on
+ * every request too. Everything is resolved in fire().
  */
 class WorkCommand extends AbstractCommand
 {
-    public function __construct(
-        private readonly Queue $queue,
-        private readonly Cache $cache,
-        private readonly Runner $runner,
-    ) {
-        parent::__construct();
-    }
 
     protected function configure(): void
     {
@@ -34,15 +31,15 @@ class WorkCommand extends AbstractCommand
     protected function fire(): int
     {
         if ($this->input->getOption('now')) {
-            $result = $this->runner->run();
+            $result = resolve(Runner::class)->run();
 
             $this->info($result === null ? 'Another round is running.' : json_encode($result, JSON_THROW_ON_ERROR));
 
             return 0;
         }
 
-        if ($this->cache->add(Runner::QUEUED, 1, 900)) {
-            $this->queue->push(new WorkJob());
+        if (resolve(Cache::class)->add(Runner::QUEUED, 1, 900)) {
+            resolve(Queue::class)->push(new WorkJob());
         }
 
         return 0;
