@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string|null $action
  * @property string|null $replacement
  * @property string|null $replacement_hash
- * @property string|null $previous
+ * @property string|null $prior
  * @property bool        $apply_pending
  * @property int         $mirror_tries
  * @property string|null $mirror_path
@@ -73,7 +73,7 @@ class Link extends AbstractModel
         // Posts already rewritten carry the old replacement until the new
         // decision has been applied to them.
         if ($this->replacement !== null && $this->replacement !== $url) {
-            $this->previous = $this->replacement;
+            $this->prior = $this->replacement;
         }
 
         $this->replacement = $url;

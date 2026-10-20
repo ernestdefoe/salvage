@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\Salvage\Work;
 
+use Carbon\Carbon;
 use Ernestdefoe\Salvage\Link;
 use Ernestdefoe\Salvage\Tracker;
 use Illuminate\Contracts\Filesystem\Factory;
@@ -70,7 +71,7 @@ class Applier
     private function finish(Link $link): void
     {
         $link->apply_pending = false;
-        $link->previous = null;
+        $link->prior = null;
 
         if ($link->action === 'restore') {
             $path = $link->mirror_path;
@@ -78,13 +79,13 @@ class Applier
             $link->action = null;
             $link->replacement = null;
             $link->replacement_hash = null;
-            $link->previous = null;
+            $link->prior = null;
             $link->mirror_path = null;
             // Mirroring is not tried again by itself after it was undone.
             $link->mirror_tries = 255;
             $link->status = 'pending';
             $link->fail_count = 0;
-            $link->next_check_at = now();
+            $link->next_check_at = Carbon::now();
 
             if ($path !== null && ! Link::query()->where('mirror_path', $path)->whereKeyNot($link->id)->exists()) {
                 $this->filesystem->disk(Mirror::DISK)->delete($path);

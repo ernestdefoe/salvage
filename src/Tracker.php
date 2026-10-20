@@ -108,7 +108,7 @@ class Tracker
 
         foreach ($links as $link) {
             // A post may already carry the replacement of an earlier decision.
-            $carried = array_filter([$link->url, $link->replacement, $link->previous]);
+            $carried = array_filter([$link->url, $link->replacement, $link->prior]);
 
             if (($link->action === 'mirror' || $link->action === 'replace') && $link->replacement !== null) {
                 foreach ($carried as $url) {
@@ -207,7 +207,7 @@ class Tracker
         return Link::query()
             ->whereIn('url_hash', $hashes)
             ->orWhereIn('replacement_hash', $hashes)
-            ->get(['id', 'url', 'kind', 'action', 'replacement', 'previous']);
+            ->get(['id', 'url', 'kind', 'action', 'replacement', 'prior']);
     }
 
     /**

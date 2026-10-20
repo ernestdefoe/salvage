@@ -24,7 +24,7 @@ return [
             // Finds the original again from a post that already carries the replacement.
             $table->char('replacement_hash', 40)->nullable()->index();
             // The replacement before the current decision, while posts still carry it.
-            $table->text('previous')->nullable();
+            $table->text('prior')->nullable();
             // Posts still to be rewritten for the current action.
             $table->boolean('apply_pending')->default(false)->index();
             $table->unsignedTinyInteger('mirror_tries')->default(0);

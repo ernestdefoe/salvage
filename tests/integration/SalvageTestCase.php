@@ -37,7 +37,8 @@ abstract class SalvageTestCase extends TestCase
 
         $this->extension('flarum-markdown', 'flarum-bbcode', 'flarum-tags', 'flarum-mentions', 'flarum-flags', 'ernestdefoe-salvage');
 
-        $now = Carbon::now()->toDateTimeString();
+        // An hour ago, or the first reply by its author trips the flood control.
+        $now = Carbon::now()->subHour()->toDateTimeString();
 
         $this->prepareDatabase([
             User::class => [$this->normalUser()],
