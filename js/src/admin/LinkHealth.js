@@ -10,8 +10,24 @@ import ReplaceModal from './ReplaceModal';
 const t = (key, params) => app.translator.trans(`ernestdefoe-salvage.admin.${key}`, params);
 const VIEWS = ['broken', 'failing', 'decided', 'mirrored', 'ignored', 'skipped', 'all'];
 const ERRORS = [
-  'http_404', 'http_410', 'dns_none', 'dns', 'timeout', 'connect', 'tls', 'redirects', 'too_large', 'not_image',
-  'storage', 'scheme', 'credentials', 'port', 'host', 'private_address', 'own_site', 'skip_list',
+  'http_404',
+  'http_410',
+  'dns_none',
+  'dns',
+  'timeout',
+  'connect',
+  'tls',
+  'redirects',
+  'too_large',
+  'not_image',
+  'storage',
+  'scheme',
+  'credentials',
+  'port',
+  'host',
+  'private_address',
+  'own_site',
+  'skip_list',
 ];
 
 /** Only web addresses become links in the admin page; anything else stays text. */

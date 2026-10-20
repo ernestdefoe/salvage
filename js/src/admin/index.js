@@ -35,14 +35,16 @@ const toggle = (name) => () => ({
   help: t(`settings.${name}_help`),
 });
 
-const number = (name, min, max, help = true) => () => ({
-  setting: key(name),
-  type: 'number',
-  min,
-  max,
-  label: t(`settings.${name}_label`),
-  help: help ? t(`settings.${name}_help`) : undefined,
-});
+const number =
+  (name, min, max, help = true) =>
+  () => ({
+    setting: key(name),
+    type: 'number',
+    min,
+    max,
+    label: t(`settings.${name}_label`),
+    help: help ? t(`settings.${name}_help`) : undefined,
+  });
 
 // Callbacks, not values: this module runs before the app has booted.
 export const extend = [

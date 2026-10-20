@@ -12,10 +12,7 @@ app.initializers.add(
     override(Post.prototype, 'flagReason', function (original, flag) {
       if (flag.type() !== 'salvage') return original(flag);
 
-      return [
-        app.translator.trans('ernestdefoe-salvage.forum.flag_reason'),
-        <span className="Post-flagged-detail">{flag.reasonDetail()}</span>,
-      ];
+      return [app.translator.trans('ernestdefoe-salvage.forum.flag_reason'), <span className="Post-flagged-detail">{flag.reasonDetail()}</span>];
     });
   },
   -10

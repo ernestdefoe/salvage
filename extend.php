@@ -35,7 +35,8 @@ return [
 
     $settings,
 
-    new Extend\ServiceProvider(Provider::class),
+    (new Extend\ServiceProvider())
+        ->register(Provider::class),
 
     // Eloquent's own events, so posts saved by any code path are covered,
     // not only those saved through the API. Resolved only when a post saves.
@@ -61,5 +62,7 @@ return [
 
     (new Extend\Console())
         ->command(WorkCommand::class)
-        ->schedule(WorkCommand::class, fn (Event $event) => $event->everyFiveMinutes()),
+        ->schedule(WorkCommand::class, function (Event $event): void {
+            $event->everyFiveMinutes();
+        }),
 ];

@@ -3,10 +3,8 @@
 namespace Ernestdefoe\Salvage\Console;
 
 use Ernestdefoe\Salvage\Work\Runner;
-use Ernestdefoe\Salvage\Work\WorkJob;
+use Ernestdefoe\Salvage\Work\Enqueue;
 use Flarum\Console\AbstractCommand;
-use Illuminate\Contracts\Cache\Repository as Cache;
-use Illuminate\Contracts\Queue\Queue;
 use Symfony\Component\Console\Input\InputOption;
 
 /**
@@ -38,9 +36,7 @@ class WorkCommand extends AbstractCommand
             return 0;
         }
 
-        if (resolve(Cache::class)->add(Runner::QUEUED, 1, 900)) {
-            resolve(Queue::class)->push(new WorkJob());
-        }
+        resolve(Enqueue::class)();
 
         return 0;
     }
